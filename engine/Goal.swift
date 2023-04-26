@@ -10,6 +10,12 @@ import Foundation
 struct Goal: Equatable {
     var subject:String
     var type:GoalType
+    var status:GoalStatus = .toDo
+}
+
+enum GoalStatus {
+    case toDo
+    case done
 }
 
 enum GoalType {

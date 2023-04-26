@@ -9,7 +9,7 @@ import Foundation
 
 protocol GoalsRepository {
     func create(goal: Goal)
-    func listToday() -> [Goal]
+    func listToday() async -> [Goal]
 }
 
 enum AppEngineError: Error {
@@ -18,10 +18,8 @@ enum AppEngineError: Error {
 
 class AppEngine {
     private let repository:GoalsRepository
-    var todayGoals:[Goal] {
-        get {
-            repository.listToday()
-        }
+    func todayGoals() async -> [Goal] {
+        await repository.listToday()
     }
     
     init(repository: GoalsRepository) {
@@ -35,6 +33,4 @@ class AppEngine {
             repository.create(goal: goal)
         }
     }
-    
-    
 }

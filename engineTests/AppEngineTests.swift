@@ -11,11 +11,11 @@ import XCTest
 
 class AppEnngineTests: XCTestCase {
     
-    func test_should_init_with_empty_goals() {
+    func test_should_init_with_empty_goals() async {
         let localRepository = SpyRepository()
         let sut = AppEngine.init(repository: localRepository)
-        let goals = sut.todayGoals
-        
+        let goals = await sut.todayGoals()
+      
         XCTAssertTrue(goals.count == 0)
     }
     
@@ -42,7 +42,7 @@ class AppEnngineTests: XCTestCase {
         XCTAssertTrue(localRepository.createGoalInvokes == 0)
     }
     
-    func test_shoud_list_goals_if_these_are_configured() throws {
+    func test_shoud_list_goals_if_these_are_configured() async throws {
         let localRepository = SpyRepository()
         let sut = AppEngine.init(repository: localRepository)
         let goals = [
@@ -54,12 +54,13 @@ class AppEnngineTests: XCTestCase {
         try goals.forEach { goal in
             try sut.addGoal(with: goal)
         }
-    
-        XCTAssertEqual(sut.todayGoals, goals)
+        let todayGoals = await sut.todayGoals()
+        
+        XCTAssertEqual(todayGoals, goals)
         XCTAssertTrue(localRepository.listGoalInvokes == 1)
     }
     
-    func test_shoud_wait_for_goals_if_these_are_configured() throws {
+    func test_listed_goals_status_should_be_todo_when_are_recently_created() async throws {
         let localRepository = SpyRepository()
         let sut = AppEngine.init(repository: localRepository)
         let goals = [
@@ -67,13 +68,15 @@ class AppEnngineTests: XCTestCase {
             Goal(subject: "Excercise", type: .personal),
             Goal(subject: "Spend time with girlfriend", type: .family),
             Goal(subject: "Start course of TDD", type: .educational)]
-        
+
         try goals.forEach { goal in
             try sut.addGoal(with: goal)
         }
-    
-        XCTAssertEqual(sut.todayGoals, goals)
-        XCTAssertTrue(localRepository.listGoalInvokes == 1)
+
+        let todayGoals = await sut.todayGoals()
+        todayGoals.forEach { goal in
+            XCTAssertEqual(goal.status, .toDo)
+        }
     }
     
     
@@ -88,9 +91,21 @@ class AppEnngineTests: XCTestCase {
             createGoalInvokes += 1
         }
         
-        func listToday() -> [engine.Goal] {
+        func listToday() async -> [engine.Goal] {
             listGoalInvokes += 1
+            await simulateQueuedGoals()
             return goals
+        }
+        
+        func simulateQueuedGoals() async {
+            let basicTask = Task {
+                return "This is the result of the task"
+            }
+            
+            for _ in 0...100 {
+                // simulation queued
+            }
+            print(await basicTask.value)
         }
     }
 }
